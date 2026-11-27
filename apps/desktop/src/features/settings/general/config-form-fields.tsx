@@ -5,7 +5,6 @@ import { ChevronDown, FolderSearch, Loader2, Plus, Trash2 } from 'lucide-react'
 import { ConfigSchema } from '@weekly-git-report/shared'
 import type { Config } from '@weekly-git-report/shared'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import {
   FormControl,
@@ -64,10 +63,10 @@ export function ConfigFormFields({
       name='outputRoot'
       render={({ field }) => (
         <FormItem>
-          <FormLabel>报告输出目录</FormLabel>
+          <FormLabel className='text-xs'>报告输出目录</FormLabel>
           <div className='flex gap-2'>
             <FormControl>
-              <Input {...field} />
+              <Input {...field} className='font-mono text-xs' />
             </FormControl>
             <Button
               type='button'
@@ -79,7 +78,9 @@ export function ConfigFormFields({
               选择
             </Button>
           </div>
-          <FormDescription>可以选择文件夹，也可以直接输入完整路径。</FormDescription>
+          <FormDescription className='text-xs'>
+            可以选择文件夹，也可以直接输入完整路径。
+          </FormDescription>
           <FormMessage />
         </FormItem>
       )}
@@ -92,13 +93,13 @@ export function ConfigFormFields({
       name='repositoryCacheRoot'
       render={({ field }) => (
         <FormItem>
-          <FormLabel>仓库缓存目录</FormLabel>
+          <FormLabel className='text-xs'>仓库缓存目录</FormLabel>
           <div className='flex gap-2'>
             <FormControl>
               <Input
                 {...field}
                 readOnly={!cacheEditable}
-                className={cacheEditable ? undefined : 'bg-muted/50'}
+                className={cacheEditable ? 'font-mono text-xs' : 'bg-muted/40 font-mono text-xs text-muted-foreground'}
               />
             </FormControl>
             {cacheEditable ? (
@@ -113,7 +114,7 @@ export function ConfigFormFields({
               </Button>
             ) : null}
           </div>
-          <FormDescription>
+          <FormDescription className='text-xs'>
             用于保存本地仓库缓存。
             {cacheEditable ? ' 完成首次设置后不能在桌面端修改。' : ' 此目录不能在桌面端修改。'}
           </FormDescription>
@@ -128,10 +129,12 @@ export function ConfigFormFields({
       control={form.control}
       name='includeEmptyProjects'
       render={({ field }) => (
-        <FormItem className='flex items-center justify-between gap-4 rounded-lg border p-4'>
+        <FormItem className='flex items-center justify-between gap-4 rounded-md border border-border bg-card px-3.5 py-3'>
           <div>
-            <FormLabel>显示无提交仓库</FormLabel>
-            <FormDescription>在报告中显示当前周期没有匹配提交的已启用仓库。</FormDescription>
+            <FormLabel className='text-[13px] font-medium'>显示无提交仓库</FormLabel>
+            <FormDescription className='text-xs'>
+              在报告中显示当前周期没有匹配提交的已启用仓库。
+            </FormDescription>
           </div>
           <FormControl>
             <Switch checked={field.value} onCheckedChange={field.onChange} />
@@ -142,63 +145,64 @@ export function ConfigFormFields({
   )
 
   return (
-    <>
-      <Card>
-        <CardHeader>
-          <CardTitle>目录</CardTitle>
-          <CardDescription>修改目录只影响后续生成内容，不会迁移已有报告或仓库。</CardDescription>
-        </CardHeader>
-        <CardContent className='space-y-5'>
+    <div className='divide-y divide-border/80'>
+      <section className='space-y-4 pb-6'>
+        <div>
+          <h2 className='text-[13.5px] font-medium text-foreground'>目录</h2>
+          <p className='mt-0.5 text-xs text-muted-foreground'>
+            修改目录只影响后续生成内容，不会迁移已有报告或仓库。
+          </p>
+        </div>
+        <div className='space-y-4'>
           {outputField}
           {!compact && cacheField}
-        </CardContent>
-      </Card>
+        </div>
+      </section>
 
-      <IdentityFields
-        fields={identities.fields}
-        append={identities.append}
-        remove={identities.remove}
-      />
+      <section className='py-6'>
+        <IdentityFields
+          fields={identities.fields}
+          append={identities.append}
+          remove={identities.remove}
+        />
+      </section>
 
       {compact ? (
-        <Collapsible open={advancedOpen} onOpenChange={setAdvancedOpen}>
-          <Card>
-            <CardHeader>
-              <CollapsibleTrigger asChild>
-                <Button
-                  type='button'
-                  variant='ghost'
-                  className='h-auto w-full justify-between p-0 text-start'
-                >
-                  <span>
-                    <CardTitle>高级设置</CardTitle>
-                    <CardDescription className='mt-1.5'>缓存目录和无提交仓库规则。</CardDescription>
-                  </span>
-                  <ChevronDown
-                    className={
-                      advancedOpen ? 'rotate-180 transition-transform' : 'transition-transform'
-                    }
-                  />
-                </Button>
-              </CollapsibleTrigger>
-            </CardHeader>
-            <CollapsibleContent>
-              <CardContent className='space-y-5'>
-                {cacheField}
-                {includeEmptyField}
-              </CardContent>
+        <section className='pt-6'>
+          <Collapsible open={advancedOpen} onOpenChange={setAdvancedOpen}>
+            <CollapsibleTrigger asChild>
+              <button
+                type='button'
+                className='flex w-full items-center justify-between text-start'
+              >
+                <div>
+                  <h2 className='text-[13.5px] font-medium text-foreground'>高级设置</h2>
+                  <p className='mt-0.5 text-xs text-muted-foreground'>
+                    缓存目录和无提交仓库规则。
+                  </p>
+                </div>
+                <ChevronDown
+                  className={
+                    advancedOpen
+                      ? 'size-4 rotate-180 text-muted-foreground transition-transform duration-150'
+                      : 'size-4 text-muted-foreground transition-transform duration-150'
+                  }
+                />
+              </button>
+            </CollapsibleTrigger>
+            <CollapsibleContent className='space-y-4 pt-4'>
+              {cacheField}
+              {includeEmptyField}
             </CollapsibleContent>
-          </Card>
-        </Collapsible>
+          </Collapsible>
+        </section>
       ) : (
-        <Card>
-          <CardHeader>
-            <CardTitle>采集规则</CardTitle>
-          </CardHeader>
-          <CardContent>{includeEmptyField}</CardContent>
-        </Card>
+        <section className='space-y-3 pt-6'>
+          <h2 className='text-[13.5px] font-medium text-foreground'>采集规则</h2>
+          {includeEmptyField}
+        </section>
       )}
-    </>
+    </div>
   )
 }
 
@@ -213,11 +217,13 @@ function IdentityFields({
 }) {
   const form = useFormContext<ConfigFormInput, unknown, Config>()
   return (
-    <Card>
-      <CardHeader className='flex items-start justify-between'>
-        <div className='space-y-1.5'>
-          <CardTitle>Git 作者身份</CardTitle>
-          <CardDescription>采集时只保留匹配这些姓名或邮箱的提交。</CardDescription>
+    <div className='space-y-3.5'>
+      <div className='flex items-start justify-between gap-3'>
+        <div>
+          <h2 className='text-[13.5px] font-medium text-foreground'>Git 作者身份</h2>
+          <p className='mt-0.5 text-xs text-muted-foreground'>
+            采集时只保留匹配这些姓名或邮箱的提交。
+          </p>
         </div>
         <Button
           type='button'
@@ -228,19 +234,19 @@ function IdentityFields({
           <Plus />
           添加身份
         </Button>
-      </CardHeader>
-      <CardContent className='space-y-3'>
+      </div>
+      <div className='space-y-2.5'>
         {fields.map((identity, index) => (
           <div
             key={identity.id}
-            className='grid gap-3 rounded-lg border p-3 sm:grid-cols-[1fr_1fr_auto]'
+            className='grid gap-3 rounded-md border border-border bg-card p-3 sm:grid-cols-[1fr_1fr_auto]'
           >
             <FormField
               control={form.control}
               name={`identities.${index}.name`}
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>姓名</FormLabel>
+                  <FormLabel className='text-xs'>姓名</FormLabel>
                   <FormControl>
                     <Input {...field} />
                   </FormControl>
@@ -253,7 +259,7 @@ function IdentityFields({
               name={`identities.${index}.email`}
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>邮箱</FormLabel>
+                  <FormLabel className='text-xs'>邮箱</FormLabel>
                   <FormControl>
                     <Input type='email' {...field} />
                   </FormControl>
@@ -280,7 +286,7 @@ function IdentityFields({
             添加第一个身份
           </Button>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   )
 }

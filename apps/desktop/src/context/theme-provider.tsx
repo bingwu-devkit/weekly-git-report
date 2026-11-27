@@ -1,10 +1,10 @@
-import { createContext, useContext, useEffect, useState, useMemo } from 'react'
+import { createContext, useContext, useEffect, useState } from 'react'
 import { getCookie, setCookie, removeCookie } from '@/lib/cookies'
 
-type Theme = 'dark' | 'light' | 'system'
-type ResolvedTheme = Exclude<Theme, 'system'>
+export type Theme = 'dark' | 'light' | 'system'
+export type ResolvedTheme = Exclude<Theme, 'system'>
 
-const DEFAULT_THEME = 'system'
+const DEFAULT_THEME: Theme = 'dark'
 const THEME_COOKIE_NAME = 'vite-ui-theme'
 const THEME_COOKIE_MAX_AGE = 60 * 60 * 24 * 365 // 1 year
 
@@ -24,7 +24,7 @@ type ThemeProviderState = {
 
 const initialState: ThemeProviderState = {
   defaultTheme: DEFAULT_THEME,
-  resolvedTheme: 'light',
+  resolvedTheme: 'dark',
   theme: DEFAULT_THEME,
   setTheme: () => null,
   resetTheme: () => null,
@@ -32,52 +32,64 @@ const initialState: ThemeProviderState = {
 
 const ThemeContext = createContext<ThemeProviderState>(initialState)
 
+function getStoredTheme(storageKey: string, fallback: Theme): Theme {
+  const stored = getCookie(storageKey)
+  if (stored === 'dark' || stored === 'light' || stored === 'system') {
+    return stored
+  }
+  return fallback
+}
+
+function getSystemTheme(): ResolvedTheme {
+  return window.matchMedia('(prefers-color-scheme: dark)').matches
+    ? 'dark'
+    : 'light'
+}
+
 export function ThemeProvider({
   children,
   defaultTheme = DEFAULT_THEME,
   storageKey = THEME_COOKIE_NAME,
   ...props
 }: ThemeProviderProps) {
-  const [theme, _setTheme] = useState<Theme>(
-    () => (getCookie(storageKey) as Theme) || defaultTheme
+  const [theme, _setTheme] = useState<Theme>(() =>
+    getStoredTheme(storageKey, defaultTheme)
+  )
+  const [systemTheme, setSystemTheme] = useState<ResolvedTheme>(() =>
+    getSystemTheme()
   )
 
-  // Optimized: Memoize the resolved theme calculation to prevent unnecessary re-computations
-  const resolvedTheme = useMemo((): ResolvedTheme => {
-    if (theme === 'system') {
-      return window.matchMedia('(prefers-color-scheme: dark)').matches
-        ? 'dark'
-        : 'light'
+  const resolvedTheme: ResolvedTheme = theme === 'system' ? systemTheme : theme
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
+    const handleChange = () => {
+      setSystemTheme(mediaQuery.matches ? 'dark' : 'light')
     }
-    return theme as ResolvedTheme
-  }, [theme])
+    mediaQuery.addEventListener('change', handleChange)
+    return () => mediaQuery.removeEventListener('change', handleChange)
+  }, [])
 
   useEffect(() => {
     const root = window.document.documentElement
-    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
+    root.classList.remove('light', 'dark')
+    root.classList.add(resolvedTheme)
+    root.style.colorScheme = resolvedTheme
 
-    const applyTheme = (currentResolvedTheme: ResolvedTheme) => {
-      root.classList.remove('light', 'dark') // Remove existing theme classes
-      root.classList.add(currentResolvedTheme) // Add the new theme class
+    const metaThemeColor = document.querySelector("meta[name='theme-color']")
+    if (metaThemeColor) {
+      metaThemeColor.setAttribute(
+        'content',
+        resolvedTheme === 'dark' ? '#0B0C0E' : '#F6F7F8'
+      )
     }
 
-    const handleChange = () => {
-      if (theme === 'system') {
-        const systemTheme = mediaQuery.matches ? 'dark' : 'light'
-        applyTheme(systemTheme)
-      }
-    }
+    void window.electronAPI?.system?.setWindowTheme?.(resolvedTheme)
+  }, [resolvedTheme])
 
-    applyTheme(resolvedTheme)
-
-    mediaQuery.addEventListener('change', handleChange)
-
-    return () => mediaQuery.removeEventListener('change', handleChange)
-  }, [theme, resolvedTheme])
-
-  const setTheme = (theme: Theme) => {
-    setCookie(storageKey, theme, THEME_COOKIE_MAX_AGE)
-    _setTheme(theme)
+  const setTheme = (nextTheme: Theme) => {
+    setCookie(storageKey, nextTheme, THEME_COOKIE_MAX_AGE)
+    _setTheme(nextTheme)
   }
 
   const resetTheme = () => {
@@ -85,7 +97,7 @@ export function ThemeProvider({
     _setTheme(DEFAULT_THEME)
   }
 
-  const contextValue = {
+  const contextValue: ThemeProviderState = {
     defaultTheme,
     resolvedTheme,
     resetTheme,

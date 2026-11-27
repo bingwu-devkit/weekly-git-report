@@ -1,4 +1,4 @@
-import { dialog, ipcMain, shell } from "electron";
+import { BrowserWindow, dialog, ipcMain, shell } from "electron";
 import { getOutputRoot, normalizeAbsolutePath } from "@weekly-git-report/core";
 import {
   AiProviderSchema,
@@ -353,6 +353,21 @@ export function registerIpcHandlers(): void {
       ...(initialPath ? { defaultPath: normalizeAbsolutePath(initialPath) } : {}),
     });
     return result.canceled ? null : (result.filePaths[0] ?? null);
+  });
+  ipcMain.handle(IPC_CHANNELS.systemSetWindowTheme, (event, theme: unknown) => {
+    if (theme !== "dark" && theme !== "light") {
+      throw new Error("窗口主题参数无效。");
+    }
+    const window = BrowserWindow.fromWebContents(event.sender);
+    if (!window || window.isDestroyed()) return;
+    window.setBackgroundColor(theme === "dark" ? "#0B0C0E" : "#F6F7F8");
+    if (process.platform === "win32" && typeof window.setTitleBarOverlay === "function") {
+      window.setTitleBarOverlay({
+        color: "#00000000",
+        symbolColor: theme === "dark" ? "#9FA4AE" : "#525866",
+        height: 36,
+      });
+    }
   });
 }
 

@@ -11,7 +11,6 @@ import { ConfirmDialog } from '@/components/confirm-dialog'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -330,16 +329,16 @@ function AutomationForm({
 
   return (
     <div className='space-y-5'>
-      <Card>
-        <CardHeader>
+      <section className='overflow-hidden rounded-lg border border-border bg-card'>
+        <div className='border-b border-border/80 px-4 py-3'>
           <CardHeading
-            icon={<Bot />}
+            icon={<Bot className='size-4 text-muted-foreground' />}
             title='AI 生成'
             desc='配置 AI 服务、API 地址、模型和密钥。'
             status={<Status status={aiStatus} dirty={aiDirty} failed={Boolean(aiTestError)} />}
           />
-        </CardHeader>
-        <CardContent className='space-y-4'>
+        </div>
+        <div className='space-y-4 p-4'>
           <AiConnectionFields
             idPrefix='settings-ai'
             provider={provider}
@@ -368,31 +367,31 @@ function AutomationForm({
             <AlertTitle>发送给模型的数据</AlertTitle>
             <AlertDescription>仓库名、分支、提交哈希、时间、标题、正文、作者姓名和你填写的补充背景。不会主动包含作者邮箱、仓库地址、本地路径或代码差异；提交文本和补充背景中的内容会原样发送。</AlertDescription>
           </Alert>
-          <label className='flex items-start gap-2 text-sm'>
+          <label className='flex items-start gap-2 text-[13px]'>
             <Checkbox checked={accepted} onCheckedChange={(value) => setAccepted(value === true)} disabled={aiBusy} />
             <span>我已了解并同意在生成报告时将上述数据发送到我配置的 AI 服务。</span>
           </label>
           {aiTestError && <TestError message={aiTestError} />}
-          <div className='flex flex-wrap justify-end gap-2'>
+          <div className='flex flex-wrap justify-end gap-2 pt-1'>
             {aiStatus.configured && <Button variant='ghost' onClick={() => requestClear('ai')} disabled={aiBusy}><Trash2 />清除配置</Button>}
             {aiDirty && <Button variant='outline' onClick={resetAi} disabled={aiBusy}><RotateCcw />取消修改</Button>}
             {aiStatus.configured && !aiDirty && <Button variant='outline' onClick={() => aiTest.mutate()} disabled={aiBusy}>{aiTest.isPending ? <Loader2 className='animate-spin' /> : <CheckCircle2 />}重新测试</Button>}
             <Button variant='outline' onClick={() => aiSave.mutate(false)} disabled={!aiDirty || !accepted || !baseUrl.trim() || !model.trim() || (aiNeedsKey && !aiKeyValue) || (aiSecretDirty && !aiKeyValue) || aiBusy}>{aiSave.isPending && <Loader2 className='animate-spin' />}保存配置</Button>
             <Button onClick={() => aiSave.mutate(true)} disabled={!aiDirty || !accepted || !baseUrl.trim() || !model.trim() || (aiNeedsKey && !aiKeyValue) || (aiSecretDirty && !aiKeyValue) || aiBusy}>{aiSave.isPending && <Loader2 className='animate-spin' />}保存并测试</Button>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </section>
 
-      <Card>
-        <CardHeader>
+      <section className='overflow-hidden rounded-lg border border-border bg-card'>
+        <div className='border-b border-border/80 px-4 py-3'>
           <CardHeading
-            icon={<Send />}
+            icon={<Send className='size-4 text-muted-foreground' />}
             title='飞书推送'
             desc='配置一个飞书群自定义机器人，签名密钥为可选项。'
             status={<Status status={feishuStatus} dirty={feishuDirty} failed={Boolean(feishuTestError)} />}
           />
-        </CardHeader>
-        <CardContent className='space-y-4'>
+        </div>
+        <div className='space-y-4 p-4'>
           <SecretField
             id='feishu-webhook'
             label='机器人 Webhook'
@@ -419,7 +418,7 @@ function AutomationForm({
             onCancelReplace={() => setSigningSecret(secretFromMask(feishuStatus.signingSecretMasked))}
           />
           {feishuStatus.signingEnabled && !removeSigningSecret && (
-            <div className='flex justify-end'><Button variant='link' className='h-auto p-0 text-destructive' onClick={() => setConfirmSecretRemoval(true)} disabled={feishuBusy}>移除签名密钥</Button></div>
+            <div className='flex justify-end'><Button variant='link' className='h-auto p-0 text-xs text-destructive' onClick={() => setConfirmSecretRemoval(true)} disabled={feishuBusy}>移除签名密钥</Button></div>
           )}
           {removeSigningSecret && (
             <Alert variant='destructive'>
@@ -431,14 +430,14 @@ function AutomationForm({
             </Alert>
           )}
           {feishuTestError && <TestError message={feishuTestError} />}
-          <div className='flex flex-wrap justify-end gap-2'>
+          <div className='flex flex-wrap justify-end gap-2 pt-1'>
             {feishuStatus.configured && <Button variant='ghost' onClick={() => requestClear('feishu')} disabled={feishuBusy}><Trash2 />清除配置</Button>}
             {feishuDirty && <Button variant='outline' onClick={resetFeishu} disabled={feishuBusy}><RotateCcw />取消修改</Button>}
             {feishuStatus.configured && !feishuDirty && <Button variant='outline' onClick={() => feishuTest.mutate()} disabled={feishuBusy}>{feishuTest.isPending ? <Loader2 className='animate-spin' /> : <CheckCircle2 />}重新测试</Button>}
             <Button onClick={() => feishuSave.mutate()} disabled={!feishuDirty || (!feishuStatus.configured && !webhookValue) || (webhookSecretDirty && !webhookValue) || (signingSecretDirty && !signingSecretValue && !removeSigningSecret) || feishuBusy}>{feishuSave.isPending && <Loader2 className='animate-spin' />}保存并测试</Button>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </section>
 
       <ConfirmDialog
         open={Boolean(clearTarget)}
@@ -489,7 +488,18 @@ function SecretField({ id, label, state, maskedValue, disabled, revealing, place
 }
 
 function CardHeading({ icon, title, desc, status }: { icon: React.ReactNode; title: string; desc: string; status: React.ReactNode }) {
-  return <div className='flex items-start justify-between gap-3'><div><CardTitle className='flex items-center gap-2'>{icon}{title}</CardTitle><CardDescription>{desc}</CardDescription></div>{status}</div>
+  return (
+    <div className='flex items-start justify-between gap-3'>
+      <div>
+        <h2 className='flex items-center gap-2 text-[13.5px] font-medium text-foreground'>
+          {icon}
+          {title}
+        </h2>
+        <p className='mt-0.5 text-xs text-muted-foreground'>{desc}</p>
+      </div>
+      {status}
+    </div>
+  )
 }
 
 function Status({ status, dirty, failed }: { status?: SecretConfigurationStatus; dirty: boolean; failed: boolean }) {

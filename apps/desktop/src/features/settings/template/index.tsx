@@ -18,7 +18,6 @@ import {
 } from '@/components/ui/alert-dialog'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Textarea } from '@/components/ui/textarea'
 import { getErrorMessage } from '@/lib/errors'
@@ -46,7 +45,7 @@ export function SettingsTemplate() {
     <ContentSection
       title='报告模板'
       desc='桌面端和命令行工具使用同一套报告生成规则。'
-      contentClassName='lg:max-w-none'
+      contentClassName='max-w-5xl'
     >
       <Tabs value={cadence} onValueChange={selectCadence} className='space-y-4'>
         <TabsList>
@@ -197,7 +196,7 @@ export function SummaryTemplateEditor({
   }
 
   return (
-    <div className='space-y-5'>
+    <div className='space-y-4'>
       <Alert>
         <AlertTitle>模板在桌面端和命令行工具间共享</AlertTitle>
         <AlertDescription>
@@ -205,22 +204,25 @@ export function SummaryTemplateEditor({
         </AlertDescription>
       </Alert>
 
-      <Card>
-        <CardHeader className='gap-3 sm:flex-row sm:items-start sm:justify-between'>
-          <div className='space-y-1.5'>
+      <section className='overflow-hidden rounded-lg border border-border bg-card'>
+        <div className='flex flex-wrap items-start justify-between gap-3 border-b border-border/80 px-4 py-3'>
+          <div className='space-y-1'>
             <div className='flex flex-wrap items-center gap-2'>
-              <CardTitle>{getCadenceLabel(cadence)}模板</CardTitle>
-              <Badge variant={initial.template.isDefault ? 'secondary' : 'outline'}>
+              <h2 className='text-[13.5px] font-medium text-foreground'>
+                {getCadenceLabel(cadence)}模板
+              </h2>
+              <Badge variant={dirty ? 'default' : initial.template.isDefault ? 'secondary' : 'outline'}>
                 {dirty ? '未保存修改' : initial.template.isDefault ? '默认模板' : '自定义模板'}
               </Badge>
             </div>
-            <CardDescription className='break-all font-mono text-xs'>
+            <p className='break-all font-mono text-[11px] text-muted-foreground'>
               {initial.template.path}
-            </CardDescription>
+            </p>
           </div>
-          <div className='flex flex-wrap gap-2'>
+          <div className='flex flex-wrap gap-1.5'>
             <Button
               type='button'
+              size='sm'
               variant='outline'
               onClick={() => void reload()}
               disabled={reloading || save.isPending || reset.isPending}
@@ -235,6 +237,7 @@ export function SummaryTemplateEditor({
               <AlertDialogTrigger asChild>
                 <Button
                   type='button'
+                  size='sm'
                   variant='outline'
                   disabled={
                     (initial.template.isDefault && !dirty) ||
@@ -265,6 +268,7 @@ export function SummaryTemplateEditor({
             </AlertDialog>
             <Button
               type='button'
+              size='sm'
               onClick={() => save.mutate()}
               disabled={
                 !dirty ||
@@ -278,11 +282,17 @@ export function SummaryTemplateEditor({
               保存模板
             </Button>
           </div>
-        </CardHeader>
-        <CardContent className='space-y-4'>
-          <div className='text-sm text-muted-foreground'>
-            可用变量：<code>{'{{startDate}}'}</code>、<code>{'{{endDate}}'}</code>
-            {cadence === 'custom' ? <>, <code>{'{{reportTitle}}'}</code>、<code>{'{{dayCount}}'}</code></> : null}
+        </div>
+        <div className='space-y-3.5 p-4'>
+          <div className='text-xs text-muted-foreground'>
+            可用变量：<code className='rounded bg-muted px-1 py-0.5 font-mono text-[11px] text-foreground'>{'{{startDate}}'}</code>、
+            <code className='rounded bg-muted px-1 py-0.5 font-mono text-[11px] text-foreground'>{'{{endDate}}'}</code>
+            {cadence === 'custom' ? (
+              <>
+                、<code className='rounded bg-muted px-1 py-0.5 font-mono text-[11px] text-foreground'>{'{{reportTitle}}'}</code>、
+                <code className='rounded bg-muted px-1 py-0.5 font-mono text-[11px] text-foreground'>{'{{dayCount}}'}</code>
+              </>
+            ) : null}
             。列出的变量都必须保留，其他变量不会被接受。
           </div>
           <Tabs defaultValue='edit'>
@@ -296,11 +306,11 @@ export function SummaryTemplateEditor({
                 value={content}
                 onChange={(event) => setContent(event.target.value)}
                 spellCheck={false}
-                className='min-h-[520px] resize-y font-mono text-sm leading-6'
+                className='min-h-[520px] resize-y font-mono text-xs leading-6'
               />
             </TabsContent>
             <TabsContent value='preview' className='mt-3'>
-              <div className='mb-3 text-sm text-muted-foreground'>
+              <div className='mb-2.5 font-mono text-xs text-muted-foreground tabular-nums'>
                 示例周期：{period.start} 至 {period.end}
               </div>
               {previewError ? (
@@ -310,14 +320,14 @@ export function SummaryTemplateEditor({
                   <AlertDescription>{previewError}</AlertDescription>
                 </Alert>
               ) : (
-                <div className='min-h-[520px] rounded-lg border p-5'>
+                <div className='min-h-[520px] rounded-md border border-border bg-background p-5'>
                   <MarkdownViewer content={preview ?? ''} />
                 </div>
               )}
             </TabsContent>
           </Tabs>
-        </CardContent>
-      </Card>
+        </div>
+      </section>
     </div>
   )
 }

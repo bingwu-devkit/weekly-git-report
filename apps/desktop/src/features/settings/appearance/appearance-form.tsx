@@ -1,162 +1,223 @@
-import { z } from 'zod'
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { fonts } from '@/config/fonts'
+import { Check, Laptop, Moon, Sun } from 'lucide-react'
+import { useTheme, type Theme } from '@/context/theme-provider'
 import { showSuccessToast } from '@/lib/toast'
-import { useFont } from '@/context/font-provider'
-import { useTheme } from '@/context/theme-provider'
-import { Button } from '@/components/ui/button'
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form'
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
+import { cn } from '@/lib/utils'
 
-const appearanceFormSchema = z.object({
-  theme: z.enum(['light', 'dark']),
-  font: z.enum(fonts),
-})
-
-type AppearanceFormValues = z.infer<typeof appearanceFormSchema>
+const THEME_OPTIONS: Array<{
+  value: Theme
+  label: string
+  description: string
+  icon: React.ElementType
+}> = [
+  {
+    value: 'dark',
+    label: '深色',
+    description: 'Obsidian 极暗中性灰，适合长时间专注工作',
+    icon: Moon,
+  },
+  {
+    value: 'light',
+    label: '浅色',
+    description: '纯净高对比浅灰白，明亮清晰',
+    icon: Sun,
+  },
+  {
+    value: 'system',
+    label: '跟随系统',
+    description: '自动同步操作系统深浅色外观',
+    icon: Laptop,
+  },
+]
 
 export function AppearanceForm() {
-  const { font, setFont } = useFont()
   const { theme, setTheme } = useTheme()
 
-  // This can come from your database or API.
-  const defaultValues: Partial<AppearanceFormValues> = {
-    theme: theme as 'light' | 'dark',
-    font,
-  }
-
-  const form = useForm<AppearanceFormValues>({
-    resolver: zodResolver(appearanceFormSchema),
-    defaultValues,
-  })
-
-  function onSubmit(data: AppearanceFormValues) {
-    if (data.font != font) setFont(data.font)
-    if (data.theme != theme) setTheme(data.theme)
-
-    showSuccessToast('外观设置已更新')
+  function handleSelect(next: Theme) {
+    if (next === theme) return
+    setTheme(next)
+    showSuccessToast('显示主题已切换')
   }
 
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-8'>
-        <FormField
-          control={form.control}
-          name='font'
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>字体</FormLabel>
-              <Select value={field.value} onValueChange={field.onChange}>
-                <FormControl>
-                  <SelectTrigger className='w-50 font-normal capitalize'>
-                    <SelectValue placeholder='选择字体' />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  {fonts.map((font) => (
-                    <SelectItem key={font} value={font} className='capitalize'>
-                      {font}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <FormDescription className='font-manrope'>
-                选择应用界面使用的字体。
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name='theme'
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>主题</FormLabel>
-              <FormDescription>
-                选择应用界面的显示主题。
-              </FormDescription>
-              <FormMessage />
-              <RadioGroup
-                onValueChange={field.onChange}
-                defaultValue={field.value}
-                className='grid max-w-md grid-cols-2 gap-8 pt-2'
-              >
-                <FormItem>
-                  <FormLabel className='[&:has([data-state=checked])>div]:border-primary'>
-                    <FormControl>
-                      <RadioGroupItem value='light' className='sr-only' />
-                    </FormControl>
-                    <div className='items-center rounded-md border-2 border-muted p-1 hover:border-accent'>
-                      <div className='space-y-2 rounded-sm bg-[#ecedef] p-2'>
-                        <div className='space-y-2 rounded-md bg-white p-2 shadow-xs'>
-                          <div className='h-2 w-20 rounded-lg bg-[#ecedef]' />
-                          <div className='h-2 w-25 rounded-lg bg-[#ecedef]' />
-                        </div>
-                        <div className='flex items-center space-x-2 rounded-md bg-white p-2 shadow-xs'>
-                          <div className='h-4 w-4 rounded-full bg-[#ecedef]' />
-                          <div className='h-2 w-25 rounded-lg bg-[#ecedef]' />
-                        </div>
-                        <div className='flex items-center space-x-2 rounded-md bg-white p-2 shadow-xs'>
-                          <div className='h-4 w-4 rounded-full bg-[#ecedef]' />
-                          <div className='h-2 w-25 rounded-lg bg-[#ecedef]' />
-                        </div>
-                      </div>
-                    </div>
-                    <span className='block w-full p-2 text-center font-normal'>
-                      浅色
-                    </span>
-                  </FormLabel>
-                </FormItem>
-                <FormItem>
-                  <FormLabel className='[&:has([data-state=checked])>div]:border-primary'>
-                    <FormControl>
-                      <RadioGroupItem value='dark' className='sr-only' />
-                    </FormControl>
-                    <div className='items-center rounded-md border-2 border-muted bg-popover p-1 hover:bg-accent hover:text-accent-foreground'>
-                      <div className='space-y-2 rounded-sm bg-slate-950 p-2'>
-                        <div className='space-y-2 rounded-md bg-slate-800 p-2 shadow-xs'>
-                          <div className='h-2 w-20 rounded-lg bg-slate-400' />
-                          <div className='h-2 w-25 rounded-lg bg-slate-400' />
-                        </div>
-                        <div className='flex items-center space-x-2 rounded-md bg-slate-800 p-2 shadow-xs'>
-                          <div className='h-4 w-4 rounded-full bg-slate-400' />
-                          <div className='h-2 w-25 rounded-lg bg-slate-400' />
-                        </div>
-                        <div className='flex items-center space-x-2 rounded-md bg-slate-800 p-2 shadow-xs'>
-                          <div className='h-4 w-4 rounded-full bg-slate-400' />
-                          <div className='h-2 w-25 rounded-lg bg-slate-400' />
-                        </div>
-                      </div>
-                    </div>
-                    <span className='block w-full p-2 text-center font-normal'>
-                      深色
-                    </span>
-                  </FormLabel>
-                </FormItem>
-              </RadioGroup>
-            </FormItem>
-          )}
-        />
+    <div className='space-y-5'>
+      <div className='space-y-1'>
+        <h2 className='text-[13.5px] font-medium text-foreground'>显示主题</h2>
+        <p className='text-xs text-muted-foreground'>
+          立即生效并同步桌面窗口标题栏配色。
+        </p>
+      </div>
 
-        <Button type='submit'>保存外观设置</Button>
-      </form>
-    </Form>
+      <div
+        role='radiogroup'
+        aria-label='选择显示主题'
+        className='grid gap-3 sm:grid-cols-3'
+      >
+        {THEME_OPTIONS.map((option) => {
+          const Icon = option.icon
+          const selected = theme === option.value
+          return (
+            <button
+              key={option.value}
+              type='button'
+              role='radio'
+              aria-checked={selected}
+              onClick={() => handleSelect(option.value)}
+              className={cn(
+                'group flex flex-col overflow-hidden rounded-lg border text-start transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-ring/35 focus-visible:outline-hidden',
+                selected
+                  ? 'border-primary bg-primary/[0.06]'
+                  : 'border-border bg-card hover:border-muted-foreground/40 hover:bg-accent/35'
+              )}
+            >
+              <div className='p-2.5 pb-2'>
+                <ThemePreview kind={option.value} />
+              </div>
+              <div className='flex items-start justify-between gap-2 border-t border-border/70 px-3 py-2.5'>
+                <div className='min-w-0'>
+                  <div className='flex items-center gap-1.5 text-[13px] font-medium text-foreground'>
+                    <Icon className='size-3.5 text-muted-foreground' />
+                    <span>{option.label}</span>
+                  </div>
+                  <p className='mt-0.5 text-[11px] leading-relaxed text-muted-foreground'>
+                    {option.description}
+                  </p>
+                </div>
+                <span
+                  className={cn(
+                    'mt-0.5 flex size-4 shrink-0 items-center justify-center rounded-full border transition-colors',
+                    selected
+                      ? 'border-primary bg-primary text-primary-foreground'
+                      : 'border-border'
+                  )}
+                >
+                  {selected && <Check className='size-2.5 stroke-[3]' />}
+                </span>
+              </div>
+            </button>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+function ThemePreview({ kind }: { kind: Theme }) {
+  if (kind === 'system') {
+    return (
+      <div className='grid h-22 grid-cols-2 overflow-hidden rounded-md border border-border/80'>
+        <div className='flex gap-1 bg-[#0B0C0E] p-1.5'>
+          <div className='w-5 space-y-1 pt-1'>
+            <div className='h-1.5 w-3.5 rounded-xs bg-white/80' />
+            <div className='h-1 w-4 rounded-xs bg-white/15' />
+            <div className='h-1 w-3 rounded-xs bg-white/10' />
+          </div>
+          <div className='flex-1 space-y-1.5 rounded-xs border border-white/10 bg-[#101114] p-1.5'>
+            <div className='h-1.5 w-8 rounded-xs bg-white/30' />
+            <div className='h-1 w-full rounded-xs bg-white/10' />
+            <div className='h-1 w-3/4 rounded-xs bg-white/10' />
+          </div>
+        </div>
+        <div className='flex gap-1 bg-[#F6F7F8] p-1.5'>
+          <div className='w-5 space-y-1 pt-1'>
+            <div className='h-1.5 w-3.5 rounded-xs bg-[#14161A]' />
+            <div className='h-1 w-4 rounded-xs bg-black/15' />
+            <div className='h-1 w-3 rounded-xs bg-black/10' />
+          </div>
+          <div className='flex-1 space-y-1.5 rounded-xs border border-black/10 bg-white p-1.5'>
+            <div className='h-1.5 w-8 rounded-xs bg-black/25' />
+            <div className='h-1 w-full rounded-xs bg-black/10' />
+            <div className='h-1 w-3/4 rounded-xs bg-black/10' />
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  const dark = kind === 'dark'
+  return (
+    <div
+      className={cn(
+        'flex h-22 gap-1.5 overflow-hidden rounded-md border p-1.5',
+        dark
+          ? 'border-white/10 bg-[#0B0C0E]'
+          : 'border-black/10 bg-[#F6F7F8]'
+      )}
+    >
+      <div className='flex w-9 flex-col gap-1.5 pt-1'>
+        <div
+          className={cn(
+            'h-2 w-6 rounded-xs',
+            dark ? 'bg-white/80' : 'bg-[#14161A]'
+          )}
+        />
+        <div
+          className={cn(
+            'h-1.5 w-full rounded-xs',
+            dark ? 'bg-white/15' : 'bg-black/12'
+          )}
+        />
+        <div
+          className={cn(
+            'h-1.5 w-7 rounded-xs',
+            dark ? 'bg-white/10' : 'bg-black/8'
+          )}
+        />
+        <div
+          className={cn(
+            'h-1.5 w-8 rounded-xs',
+            dark ? 'bg-white/10' : 'bg-black/8'
+          )}
+        />
+      </div>
+      <div
+        className={cn(
+          'flex flex-1 flex-col gap-1.5 rounded-xs border p-2',
+          dark
+            ? 'border-white/10 bg-[#101114]'
+            : 'border-black/10 bg-white'
+        )}
+      >
+        <div className='flex items-center justify-between'>
+          <div
+            className={cn(
+              'h-2 w-14 rounded-xs',
+              dark ? 'bg-white/35' : 'bg-black/25'
+            )}
+          />
+          <div
+            className={cn(
+              'h-2 w-5 rounded-xs',
+              dark ? 'bg-white/85' : 'bg-[#14161A]'
+            )}
+          />
+        </div>
+        <div
+          className={cn(
+            'h-px w-full',
+            dark ? 'bg-white/10' : 'bg-black/8'
+          )}
+        />
+        <div className='space-y-1.5'>
+          <div
+            className={cn(
+              'h-1.5 w-full rounded-xs',
+              dark ? 'bg-white/12' : 'bg-black/10'
+            )}
+          />
+          <div
+            className={cn(
+              'h-1.5 w-4/5 rounded-xs',
+              dark ? 'bg-white/8' : 'bg-black/8'
+            )}
+          />
+          <div
+            className={cn(
+              'h-1.5 w-3/5 rounded-xs',
+              dark ? 'bg-white/8' : 'bg-black/6'
+            )}
+          />
+        </div>
+      </div>
+    </div>
   )
 }

@@ -4,6 +4,7 @@ import {
   AlertCircle,
   Edit3,
   FolderSearch,
+  GitBranch,
   Loader2,
   MoreHorizontal,
   Plus,
@@ -24,7 +25,6 @@ import {
 } from '@/components/ui/alert-dialog'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
 import { Checkbox } from '@/components/ui/checkbox'
 import {
   DropdownMenu,
@@ -36,11 +36,11 @@ import {
 import { Header } from '@/components/layout/header'
 import { Main } from '@/components/layout/main'
 import { OverflowTooltip } from '@/components/overflow-tooltip'
-import { ThemeSwitch } from '@/components/theme-switch'
 import { getErrorMessage } from '@/lib/errors'
 import { desktopQueryKeys, projectsStateQueryOptions } from '@/lib/desktop-queries'
 import { selectSystemDirectory } from '@/lib/system-actions'
 import { showErrorToast, showSuccessToast, showWarningToast } from '@/lib/toast'
+import { cn } from '@/lib/utils'
 import { Switch } from '@/components/ui/switch'
 import {
   Table,
@@ -140,42 +140,53 @@ export function Repositories() {
   return (
     <>
       <Header>
-        <div className='me-auto'>
-          <p className='text-sm font-medium'>仓库配置</p>
-          <p className='text-xs text-muted-foreground'>配置文件：~/.weekly-git-report/projects.json</p>
+        <div className='me-auto flex items-center gap-1.5 text-xs'>
+          <span className='text-muted-foreground'>工作台</span>
+          <span className='text-muted-foreground/50'>/</span>
+          <span className='font-medium text-foreground'>仓库</span>
+          <span className='ms-1.5 hidden font-mono text-[11px] text-muted-foreground/80 sm:inline'>
+            ~/.weekly-git-report/projects.json
+          </span>
         </div>
-        <ThemeSwitch />
+        <div className='flex items-center gap-1.5'>
+          <Button
+            size='sm'
+            variant='ghost'
+            onClick={() => sync.mutate(undefined)}
+            disabled={sync.isPending || !state.projects.some((project) => project.enabled)}
+          >
+            <RefreshCw className={sync.isPending ? 'animate-spin' : ''} />
+            同步全部
+          </Button>
+          <Button
+            size='sm'
+            variant='outline'
+            onClick={() => void openImport()}
+            disabled={!state.revision || selectingImportFolder}
+          >
+            {selectingImportFolder
+              ? <Loader2 className='animate-spin' />
+              : <FolderSearch />}
+            从文件夹导入
+          </Button>
+          <Button size='sm' onClick={openAdd} disabled={!state.revision}>
+            <Plus />
+            添加仓库
+          </Button>
+        </div>
       </Header>
-      <Main className='space-y-6'>
+
+      <Main className='space-y-4'>
         <div className='flex flex-wrap items-end justify-between gap-3'>
           <div>
-            <h1 className='text-2xl font-bold tracking-tight md:text-3xl'>仓库</h1>
-            <p className='text-muted-foreground'>管理参与同步和报告采集的 Git 仓库。</p>
+            <h1 className='text-lg font-semibold tracking-[-0.02em]'>仓库</h1>
+            <p className='mt-0.5 text-xs text-muted-foreground'>
+              管理参与同步和报告采集的 Git 仓库。
+            </p>
           </div>
-          <div className='flex gap-2'>
-            <Button
-              variant='outline'
-              onClick={() => sync.mutate(undefined)}
-              disabled={sync.isPending || !state.projects.some((project) => project.enabled)}
-            >
-              <RefreshCw className={sync.isPending ? 'animate-spin' : ''} />
-              同步全部
-            </Button>
-            <Button
-              variant='outline'
-              onClick={() => void openImport()}
-              disabled={!state.revision || selectingImportFolder}
-            >
-              {selectingImportFolder
-                ? <Loader2 className='animate-spin' />
-                : <FolderSearch />}
-              从文件夹导入
-            </Button>
-            <Button onClick={openAdd} disabled={!state.revision}>
-              <Plus />
-              添加仓库
-            </Button>
-          </div>
+          <span className='font-mono text-xs text-muted-foreground tabular-nums'>
+            已启用 {state.projects.filter((project) => project.enabled).length} / {state.projects.length}
+          </span>
         </div>
 
         {!state.revision && !projects.isLoading && (
@@ -210,47 +221,65 @@ export function Repositories() {
           </Alert>
         ) : null}
 
-        <Card className='overflow-hidden py-0'>
-          <CardContent className='p-0'>
-            <Table className='table-fixed'>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className='w-[46%] ps-4'>仓库</TableHead>
-                  <TableHead>最新提交</TableHead>
-                  <TableHead className='w-20 text-center'>启用</TableHead>
-                  <TableHead className='w-14 pe-4 text-end'>操作</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {state.projects.map((project) => {
-                  const syncing = sync.isPending && sync.variables?.includes(project.id)
-                  const toggling = toggle.isPending && toggle.variables?.project.id === project.id
-                  const authorSummary = project.authors?.length
-                    ? `${project.authors.length} 个专属身份`
-                    : '全局身份'
-                  const authorDetails = project.authors?.length
-                    ? project.authors
-                        .map((author) => `${author.name} <${author.email}>`)
-                        .join('\n')
-                    : '继承全局 Git 作者身份'
-                  return (
-                    <TableRow key={project.id}>
-                      <TableCell className='whitespace-normal ps-4'>
-                        <div className='min-w-0 space-y-1.5'>
-                          <OverflowTooltip text={project.name} className='font-medium' />
-                          <OverflowTooltip
-                            text={project.url}
-                            className='text-xs text-muted-foreground'
-                            monospace
-                          />
+        <div className='overflow-hidden rounded-lg border border-border bg-card'>
+          <Table className='table-fixed'>
+            <TableHeader className='bg-muted/25'>
+              <TableRow className='hover:bg-transparent'>
+                <TableHead className='w-[46%] ps-4'>仓库</TableHead>
+                <TableHead>最新提交</TableHead>
+                <TableHead className='w-20 text-center'>启用</TableHead>
+                <TableHead className='w-14 pe-4 text-end'>操作</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {state.projects.map((project) => {
+                const syncing = sync.isPending && sync.variables?.includes(project.id)
+                const toggling = toggle.isPending && toggle.variables?.project.id === project.id
+                const projectRuntime = runtimeById.get(project.id)
+                const isStale = staleProjectIds.has(project.id)
+                const authorSummary = project.authors?.length
+                  ? `${project.authors.length} 个专属身份`
+                  : '全局身份'
+                const authorDetails = project.authors?.length
+                  ? project.authors
+                      .map((author) => `${author.name} <${author.email}>`)
+                      .join('\n')
+                  : '继承全局 Git 作者身份'
+                return (
+                  <TableRow key={project.id}>
+                    <TableCell className='whitespace-normal ps-4'>
+                      <div className='flex items-start gap-2.5'>
+                        <span
+                          className={cn(
+                            'mt-1.5 size-1.5 shrink-0 rounded-full',
+                            !project.enabled
+                              ? 'bg-muted-foreground/35'
+                              : isStale
+                                ? 'bg-destructive'
+                                : projectRuntime?.latestCommit
+                                  ? 'bg-emerald-500'
+                                  : 'bg-amber-500'
+                          )}
+                        />
+                        <div className='min-w-0 flex-1 space-y-1'>
                           <div className='flex min-w-0 items-center gap-2'>
-                            <Badge variant='outline' className='max-w-40'>
+                            <OverflowTooltip text={project.name} className='font-medium text-foreground' />
+                            <Badge variant='outline' className='max-w-36 gap-1 font-mono text-[11px]'>
+                              <GitBranch className='size-2.5' />
                               <OverflowTooltip text={project.branch} monospace />
                             </Badge>
+                          </div>
+                          <div className='flex min-w-0 items-center gap-2 text-xs text-muted-foreground'>
+                            <OverflowTooltip
+                              text={project.url}
+                              className='min-w-0 flex-1 text-[11.5px] text-muted-foreground/85'
+                              monospace
+                            />
+                            <span className='shrink-0 text-border'>·</span>
                             <Tooltip>
                               <TooltipTrigger asChild>
                                 <span
-                                  className='min-w-0 truncate text-xs text-muted-foreground'
+                                  className='shrink-0 truncate text-[11.5px] text-muted-foreground'
                                   tabIndex={0}
                                 >
                                   {authorSummary}
@@ -265,83 +294,84 @@ export function Repositories() {
                             </Tooltip>
                           </div>
                         </div>
-                      </TableCell>
-                      <TableCell className='whitespace-normal'>
-                        <LatestCommitCell
-                          loading={runtime.isLoading}
-                          runtime={runtimeById.get(project.id)}
-                          stale={staleProjectIds.has(project.id)}
+                      </div>
+                    </TableCell>
+                    <TableCell className='whitespace-normal'>
+                      <LatestCommitCell
+                        loading={runtime.isLoading}
+                        runtime={projectRuntime}
+                        stale={isStale}
+                      />
+                    </TableCell>
+                    <TableCell className='text-center'>
+                      {toggling ? (
+                        <Loader2 className='mx-auto size-4 animate-spin text-muted-foreground' />
+                      ) : (
+                        <Switch
+                          checked={project.enabled}
+                          onCheckedChange={(enabled) => toggle.mutate({ project, enabled })}
+                          aria-label={`${project.name} 启用状态`}
                         />
-                      </TableCell>
-                      <TableCell className='text-center'>
-                        {toggling ? (
-                          <Loader2 className='mx-auto size-4 animate-spin' />
-                        ) : (
-                          <Switch
-                            checked={project.enabled}
-                            onCheckedChange={(enabled) => toggle.mutate({ project, enabled })}
-                            aria-label={`${project.name} 启用状态`}
-                          />
-                        )}
-                      </TableCell>
-                      <TableCell className='pe-4 text-end'>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button
-                              size='icon'
-                              variant='ghost'
-                              aria-label={`${project.name} 操作`}
-                            >
-                              {syncing
-                                ? <Loader2 className='animate-spin' />
-                                : <MoreHorizontal />}
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align='end'>
-                            <DropdownMenuItem
-                              disabled={sync.isPending}
-                              onSelect={() => sync.mutate([project.id])}
-                            >
-                              <RefreshCw />
-                              同步仓库
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onSelect={() => openEdit(project)}>
-                              <Edit3 />
-                              编辑配置
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem
-                              variant='destructive'
-                              onSelect={() => setDeleting(project)}
-                            >
-                              <Trash2 />
-                              删除仓库
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
-                    </TableRow>
-                  )
-                })}
-                {!projects.isLoading && state.projects.length === 0 && state.revision && (
-                  <TableRow>
-                    <TableCell colSpan={4} className='h-32 text-center text-muted-foreground'>
-                      还没有仓库，点击“添加仓库”开始配置。
+                      )}
+                    </TableCell>
+                    <TableCell className='pe-4 text-end'>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            size='icon'
+                            variant='ghost'
+                            className='size-7'
+                            aria-label={`${project.name} 操作`}
+                          >
+                            {syncing
+                              ? <Loader2 className='animate-spin' />
+                              : <MoreHorizontal />}
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align='end'>
+                          <DropdownMenuItem
+                            disabled={sync.isPending}
+                            onSelect={() => sync.mutate([project.id])}
+                          >
+                            <RefreshCw />
+                            同步仓库
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onSelect={() => openEdit(project)}>
+                            <Edit3 />
+                            编辑配置
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            variant='destructive'
+                            onSelect={() => setDeleting(project)}
+                          >
+                            <Trash2 />
+                            删除仓库
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </TableCell>
                   </TableRow>
-                )}
-                {projects.isLoading && (
-                  <TableRow>
-                    <TableCell colSpan={4} className='h-32 text-center text-muted-foreground'>
-                      <Loader2 className='mx-auto mb-2 animate-spin' />
-                      正在读取仓库…
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
+                )
+              })}
+              {!projects.isLoading && state.projects.length === 0 && state.revision && (
+                <TableRow className='hover:bg-transparent'>
+                  <TableCell colSpan={4} className='h-32 text-center text-xs text-muted-foreground'>
+                    还没有仓库，点击“添加仓库”开始配置。
+                  </TableCell>
+                </TableRow>
+              )}
+              {projects.isLoading && (
+                <TableRow className='hover:bg-transparent'>
+                  <TableCell colSpan={4} className='h-32 text-center text-xs text-muted-foreground'>
+                    <Loader2 className='mx-auto mb-2 size-4 animate-spin' />
+                    正在读取仓库…
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </div>
       </Main>
 
       {formOpen && (
@@ -382,7 +412,7 @@ function LatestCommitCell({
   runtime?: RepositoryRuntimeState
   stale: boolean
 }) {
-  if (loading && !runtime) return <Loader2 className='size-4 animate-spin text-muted-foreground' />
+  if (loading && !runtime) return <Loader2 className='size-3.5 animate-spin text-muted-foreground' />
   if (!runtime) return <span className='text-xs text-muted-foreground'>暂无状态</span>
   if (!runtime.latestCommit) {
     const label =
@@ -412,12 +442,12 @@ function LatestCommitCell({
     <div className='min-w-0'>
       <OverflowTooltip
         text={commit.subject}
-        className='text-sm font-medium'
+        className='text-[13px] font-medium text-foreground/95'
         content={(
           <div className='space-y-1'>
-            <p>{commit.subject}</p>
-            <p className='text-primary-foreground/80'>
-              <code>{commit.hash}</code>
+            <p className='font-medium'>{commit.subject}</p>
+            <p className='text-muted-foreground'>
+              <code className='font-mono'>{commit.hash}</code>
               <br />
               {commit.authorName} &lt;{commit.authorEmail}&gt;
               <br />
@@ -426,10 +456,12 @@ function LatestCommitCell({
           </div>
         )}
       />
-      <p className='mt-1 flex min-w-0 items-center gap-1.5 text-xs text-muted-foreground'>
-        <code className='shrink-0'>{commit.hash.slice(0, 7)}</code>
+      <p className='mt-0.5 flex min-w-0 items-center gap-1.5 text-[11.5px] text-muted-foreground'>
+        <code className='shrink-0 rounded bg-muted px-1 py-px font-mono text-[11px] text-foreground/80'>
+          {commit.hash.slice(0, 7)}
+        </code>
         <span>·</span>
-        <span className='truncate'>{timestamp}</span>
+        <span className='truncate font-mono tabular-nums'>{timestamp}</span>
         {stale ? <Badge variant='destructive'>可能过期</Badge> : null}
       </p>
     </div>
@@ -499,20 +531,20 @@ function DeleteRepositoryDialog({
         <AlertDialogHeader>
           <AlertDialogTitle>{confirmCache ? '确认永久删除缓存' : `删除 ${project?.name ?? '仓库'}`}</AlertDialogTitle>
           <AlertDialogDescription asChild>
-            <div className='space-y-4'>
+            <div className='space-y-3'>
               {confirmCache ? (
                 <>
                   <p>将永久删除以下本地缓存目录，此操作无法撤销：</p>
-                  <code className='block break-all rounded-md bg-muted p-3 text-foreground'>{project?.localPath}</code>
+                  <code className='block break-all rounded-md border border-border bg-muted/60 p-2.5 font-mono text-xs text-foreground'>{project?.localPath}</code>
                 </>
               ) : (
                 <>
                   <p>默认只删除应用中的仓库配置，本地缓存会保留。</p>
-                  <label className='flex items-start gap-3 rounded-md border p-3 text-foreground'>
+                  <label className='flex items-start gap-2.5 rounded-md border border-border p-3 text-foreground'>
                     <Checkbox checked={deleteCache} onCheckedChange={(value) => setDeleteCache(value === true)} />
                     <span>
-                      <span className='block text-sm font-medium'>同时删除本地缓存</span>
-                      <span className='block break-all text-xs text-muted-foreground'>{project?.localPath}</span>
+                      <span className='block text-[13px] font-medium'>同时删除本地缓存</span>
+                      <span className='block break-all font-mono text-[11px] text-muted-foreground'>{project?.localPath}</span>
                     </span>
                   </label>
                 </>

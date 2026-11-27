@@ -5,7 +5,7 @@ import type { DateRange } from 'react-day-picker'
 import {
   AlertTriangle,
   CalendarDays,
-  ChevronDown,
+  ChevronRight,
   FileText,
   FolderOpen,
   RefreshCw,
@@ -20,7 +20,6 @@ import type { ReportFile } from '../../../shared/ipc'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Card } from '@/components/ui/card'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import { Input } from '@/components/ui/input'
@@ -39,7 +38,6 @@ import { Header } from '@/components/layout/header'
 import { Main } from '@/components/layout/main'
 import { MarkdownViewer } from '@/components/markdown-viewer'
 import { OverflowTooltip } from '@/components/overflow-tooltip'
-import { ThemeSwitch } from '@/components/theme-switch'
 import { getErrorMessage } from '@/lib/errors'
 import { desktopQueryKeys, onboardingQueryOptions } from '@/lib/desktop-queries'
 import { openOutputRoot, showReportInFolder } from '@/lib/system-actions'
@@ -237,60 +235,57 @@ export function Reports({
   return (
     <>
       <Header>
-        <div className='me-auto'>
-          <p className='text-sm font-medium'>本地报告</p>
-          <p className='text-xs text-muted-foreground'>报告正文与采集数据</p>
+        <div className='me-auto flex items-center gap-1.5 text-xs'>
+          <span className='text-muted-foreground'>工作台</span>
+          <span className='text-muted-foreground/50'>/</span>
+          <span className='font-medium text-foreground'>
+            {trashView ? '报告库 · 回收站' : '报告库'}
+          </span>
+          <span className='ms-1.5 font-mono text-[11px] text-muted-foreground tabular-nums'>
+            {filteredReports.length}/{reports.data?.length ?? 0}
+          </span>
         </div>
-        <ThemeSwitch />
-      </Header>
-      <Main fixed className='gap-4'>
-        <div className='flex flex-wrap items-end justify-between gap-3'>
-          <div>
-            <h1 className='text-2xl font-bold tracking-tight md:text-3xl'>报告库</h1>
-            <p className='text-muted-foreground'>
-              {trashView
-                ? '恢复误删的报告，或永久清理回收站。'
-                : '按报告周期和类型查找报告正文与采集数据。'}
-            </p>
-          </div>
-          <div className='flex gap-2'>
-            {!trashView ? (
-              <Button
-                onClick={() => openGenerate()}
-                disabled={
-                  !onboarding.data?.readiness.repositoryReady || !onboarding.data?.readiness.aiReady
-                }
-                title={
-                  !onboarding.data?.readiness.aiReady
-                    ? '请先配置 AI 服务'
-                    : !onboarding.data?.readiness.repositoryReady
-                      ? '请先添加并启用仓库'
-                      : undefined
-                }
-              >
-                <Sparkles />
-                生成报告
-              </Button>
-            ) : null}
-            <Button variant='outline' onClick={() => changeTrashView(!trashView)}>
-              {trashView ? <Undo2 /> : <Trash2 />}
-              {trashView ? '返回报告库' : '回收站'}
-            </Button>
-            <Button variant='outline' onClick={() => void openOutputRoot()}>
-              <FolderOpen />
-              打开报告目录
-            </Button>
+        <div className='flex items-center gap-1.5'>
+          <Button size='sm' variant='ghost' onClick={() => changeTrashView(!trashView)}>
+            {trashView ? <Undo2 /> : <Trash2 />}
+            {trashView ? '返回报告库' : '回收站'}
+          </Button>
+          <Button size='sm' variant='ghost' onClick={() => void openOutputRoot()}>
+            <FolderOpen />
+            打开目录
+          </Button>
+          <Button
+            size='sm'
+            variant='ghost'
+            onClick={() => void refreshReports()}
+            disabled={reports.isFetching}
+          >
+            <RefreshCw className={reports.isFetching ? 'animate-spin' : ''} />
+            刷新
+          </Button>
+          {!trashView ? (
             <Button
-              variant='outline'
-              onClick={() => void refreshReports()}
-              disabled={reports.isFetching}
+              size='sm'
+              onClick={() => openGenerate()}
+              disabled={
+                !onboarding.data?.readiness.repositoryReady || !onboarding.data?.readiness.aiReady
+              }
+              title={
+                !onboarding.data?.readiness.aiReady
+                  ? '请先配置 AI 服务'
+                  : !onboarding.data?.readiness.repositoryReady
+                    ? '请先添加并启用仓库'
+                    : undefined
+              }
             >
-              <RefreshCw className={reports.isFetching ? 'animate-spin' : ''} />
-              刷新
+              <Sparkles />
+              生成报告
             </Button>
-          </div>
+          ) : null}
         </div>
+      </Header>
 
+      <Main fixed fluid className='p-0'>
         {reports.isError ? (
           <ReportListError
             error={reports.error}
@@ -298,7 +293,7 @@ export function Reports({
             onRetry={() => void refreshReports()}
           />
         ) : (
-          <>
+          <div className='flex min-h-0 flex-1 flex-col overflow-hidden'>
             <ReportFilters
               search={search}
               counts={counts}
@@ -316,10 +311,10 @@ export function Reports({
               onIncludeHistoryChange={setHistoryIncluded}
             />
 
-            <div className='grid min-h-0 flex-1 gap-4 lg:grid-cols-[420px_minmax(0,1fr)]'>
-              <Card className='min-h-0 overflow-hidden py-0'>
+            <div className='grid min-h-0 flex-1 divide-y divide-border/80 overflow-hidden lg:grid-cols-[360px_minmax(0,1fr)] lg:divide-x lg:divide-y-0'>
+              <div className='min-h-0 overflow-hidden bg-muted/15'>
                 <ScrollArea className='h-full'>
-                  <div className='space-y-3 p-3'>
+                  <div className='divide-y divide-border/50'>
                     {search.type === 'summary'
                       ? filteredReports.map((report) => (
                           <ReportListItem
@@ -350,21 +345,21 @@ export function Reports({
                           )
                         })}
                     {!reports.isLoading && filteredReports.length === 0 ? (
-                      <div className='space-y-3 p-8 text-center'>
-                        <p className='text-sm text-muted-foreground'>当前筛选条件下没有报告。</p>
+                      <div className='space-y-3 p-10 text-center'>
+                        <p className='text-xs text-muted-foreground'>当前筛选条件下没有报告。</p>
                         <Button size='sm' variant='outline' onClick={resetFilters}>
                           重置筛选
                         </Button>
                       </div>
                     ) : null}
                     {reports.isLoading ? (
-                      <p className='p-6 text-center text-sm text-muted-foreground'>
+                      <p className='p-8 text-center text-xs text-muted-foreground'>
                         正在建立报告索引…
                       </p>
                     ) : null}
                   </div>
                 </ScrollArea>
-              </Card>
+              </div>
 
               <ReportPreview
                 report={selected.data}
@@ -382,7 +377,7 @@ export function Reports({
                 }}
               />
             </div>
-          </>
+          </div>
         )}
       </Main>
       <GenerateReportDialog
@@ -431,117 +426,116 @@ function ReportFilters({
   onIncludeHistoryChange(checked: boolean): void
 }) {
   return (
-    <div className='space-y-3 rounded-xl border bg-card p-3'>
-      <div className='flex flex-wrap items-center justify-between gap-3'>
-        <Tabs value={search.type} onValueChange={onTypeChange}>
-          <TabsList>
-            {TYPE_TABS.map((tab) => (
-              <TabsTrigger key={tab.value} value={tab.value}>
-                {tab.label}
-                <span className='text-xs text-muted-foreground'>{counts[tab.value]}</span>
-              </TabsTrigger>
-            ))}
-          </TabsList>
-        </Tabs>
-        <span className='text-xs text-muted-foreground'>
-          共 {totalCount} 份，当前显示 {shownCount} 份
-        </span>
+    <div className='flex flex-wrap items-center gap-2 border-b border-border/80 bg-background px-4 py-2'>
+      <Tabs value={search.type} onValueChange={onTypeChange}>
+        <TabsList className='h-7'>
+          {TYPE_TABS.map((tab) => (
+            <TabsTrigger key={tab.value} value={tab.value} className='px-2 text-xs'>
+              {tab.label}
+              <span className='font-mono text-[11px] text-muted-foreground tabular-nums'>
+                {counts[tab.value]}
+              </span>
+            </TabsTrigger>
+          ))}
+        </TabsList>
+      </Tabs>
+
+      <div className='relative min-w-48 flex-1 lg:max-w-xs'>
+        <Search className='pointer-events-none absolute start-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground' />
+        <Input
+          value={search.query ?? ''}
+          onChange={(event) => onQueryChange(event.target.value)}
+          placeholder='搜索标题、仓库或路径…'
+          className='h-7 ps-8 pe-7 text-xs'
+          aria-label='搜索报告'
+        />
+        {search.query ? (
+          <Button
+            type='button'
+            variant='ghost'
+            size='icon'
+            className='absolute end-0 top-0 size-7'
+            onClick={onClearQuery}
+            aria-label='清除搜索'
+          >
+            <X />
+          </Button>
+        ) : null}
       </div>
 
-      <div className='flex flex-wrap items-center gap-2'>
-        <div className='relative min-w-56 flex-1 lg:max-w-sm'>
-          <Search className='pointer-events-none absolute start-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground' />
-          <Input
-            value={search.query ?? ''}
-            onChange={(event) => onQueryChange(event.target.value)}
-            placeholder='搜索标题、仓库、文件名或路径'
-            className='ps-9 pe-9'
-            aria-label='搜索报告'
-          />
-          {search.query ? (
-            <Button
-              type='button'
-              variant='ghost'
-              size='icon'
-              className='absolute end-0 top-0 size-9'
-              onClick={onClearQuery}
-              aria-label='清除搜索'
-            >
-              <X />
-            </Button>
-          ) : null}
-        </div>
+      <Select value={search.range} onValueChange={onRangeChange}>
+        <SelectTrigger size='sm' className='w-32 text-xs' aria-label='报告时间范围'>
+          <CalendarDays />
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          {Object.entries(RANGE_LABELS).map(([value, label]) => (
+            <SelectItem key={value} value={value}>
+              {label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
 
-        <Select value={search.range} onValueChange={onRangeChange}>
-          <SelectTrigger className='w-38' aria-label='报告时间范围'>
-            <CalendarDays />
+      {search.range === 'custom' ? (
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button size='sm' variant='outline' className='font-normal tabular-nums'>
+              {search.from && search.to ? `${search.from} ~ ${search.to}` : '选择日期范围'}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className='w-auto p-0' align='end'>
+            <Suspense
+              fallback={<div className='p-6 text-xs text-muted-foreground'>正在加载日历…</div>}
+            >
+              <ReportDateRangePicker range={customRange} onChange={onCustomRangeChange} />
+            </Suspense>
+          </PopoverContent>
+        </Popover>
+      ) : null}
+
+      {search.type === 'raw' ? (
+        <Select value={search.rawRole} onValueChange={onRawRoleChange}>
+          <SelectTrigger size='sm' className='w-32 text-xs' aria-label='采集数据类型'>
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            {Object.entries(RANGE_LABELS).map(([value, label]) => (
+            <SelectItem value='all'>全部采集数据</SelectItem>
+            <SelectItem value='index'>周期索引</SelectItem>
+            <SelectItem value='project'>仓库明细</SelectItem>
+            {search.includeHistory ? <SelectItem value='history'>历史版本</SelectItem> : null}
+          </SelectContent>
+        </Select>
+      ) : null}
+
+      {search.type === 'summary' ? (
+        <Select value={search.cadence} onValueChange={onCadenceChange}>
+          <SelectTrigger size='sm' className='w-36 text-xs' aria-label='报告正文类型'>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {Object.entries(CADENCE_LABELS).map(([value, label]) => (
               <SelectItem key={value} value={value}>
-                {label}
+                {label}（{cadenceCounts[value as SummaryCadenceFilter]}）
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
+      ) : null}
 
-        {search.range === 'custom' ? (
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button variant='outline' className='font-normal'>
-                {search.from && search.to ? `${search.from} ~ ${search.to}` : '选择日期范围'}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className='w-auto p-0' align='end'>
-              <Suspense
-                fallback={<div className='p-6 text-sm text-muted-foreground'>正在加载日历…</div>}
-              >
-                <ReportDateRangePicker range={customRange} onChange={onCustomRangeChange} />
-              </Suspense>
-            </PopoverContent>
-          </Popover>
-        ) : null}
+      {search.type === 'all' || search.type === 'raw' ? (
+        <Label className='flex h-7 cursor-pointer items-center gap-1.5 rounded-md border border-border px-2 text-xs font-normal text-muted-foreground transition-colors hover:text-foreground'>
+          <Checkbox
+            checked={search.includeHistory}
+            onCheckedChange={(checked) => onIncludeHistoryChange(checked === true)}
+          />
+          包含历史版本
+        </Label>
+      ) : null}
 
-        {search.type === 'raw' ? (
-          <Select value={search.rawRole} onValueChange={onRawRoleChange}>
-            <SelectTrigger className='w-34' aria-label='采集数据类型'>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value='all'>全部采集数据</SelectItem>
-              <SelectItem value='index'>周期索引</SelectItem>
-              <SelectItem value='project'>仓库明细</SelectItem>
-              {search.includeHistory ? <SelectItem value='history'>历史版本</SelectItem> : null}
-            </SelectContent>
-          </Select>
-        ) : null}
-
-        {search.type === 'summary' ? (
-          <Select value={search.cadence} onValueChange={onCadenceChange}>
-            <SelectTrigger className='w-38' aria-label='报告正文类型'>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {Object.entries(CADENCE_LABELS).map(([value, label]) => (
-                <SelectItem key={value} value={value}>
-                  {label}（{cadenceCounts[value as SummaryCadenceFilter]}）
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        ) : null}
-
-        {search.type === 'all' || search.type === 'raw' ? (
-          <Label className='flex h-9 cursor-pointer items-center gap-2 rounded-md border px-3 font-normal'>
-            <Checkbox
-              checked={search.includeHistory}
-              onCheckedChange={(checked) => onIncludeHistoryChange(checked === true)}
-            />
-            包含历史版本
-          </Label>
-        ) : null}
-      </div>
+      <span className='ms-auto hidden text-[11px] text-muted-foreground tabular-nums xl:inline'>
+        共 {totalCount} 份，显示 {shownCount} 份
+      </span>
     </div>
   )
 }
@@ -562,8 +556,8 @@ function ReportGroup({
   onSelect(id: string): void
 }) {
   const summary = [
-    group.counts.summary ? `报告正文 ${group.counts.summary}` : null,
-    group.counts.raw ? `采集数据 ${group.counts.raw}` : null,
+    group.counts.summary ? `正文 ${group.counts.summary}` : null,
+    group.counts.raw ? `数据 ${group.counts.raw}` : null,
   ]
     .filter(Boolean)
     .join(' · ')
@@ -574,21 +568,24 @@ function ReportGroup({
         <button
           type='button'
           disabled={forceOpen}
-          className='flex w-full items-center justify-between gap-3 rounded-lg bg-muted/60 px-3 py-2 text-start hover:bg-muted disabled:cursor-default disabled:opacity-100'
+          className='flex w-full items-center justify-between gap-2 bg-muted/40 px-3 py-1.5 text-start transition-colors hover:bg-muted/70 disabled:cursor-default disabled:opacity-100'
         >
-          <div className='min-w-0'>
-            <p className='truncate text-sm font-semibold'>{group.label}</p>
-            <p className='mt-0.5 text-xs text-muted-foreground'>
-              {summary}
-              {group.usesModifiedTime ? ' · 按修改时间' : ''}
-            </p>
+          <div className='flex min-w-0 items-center gap-1.5'>
+            <ChevronRight
+              className={cn(
+                'size-3.5 shrink-0 text-muted-foreground transition-transform duration-150',
+                open && 'rotate-90',
+              )}
+            />
+            <span className='truncate text-xs font-medium text-foreground'>{group.label}</span>
           </div>
-          <ChevronDown
-            className={cn('size-4 shrink-0 transition-transform', open && 'rotate-180')}
-          />
+          <span className='shrink-0 text-[11px] text-muted-foreground tabular-nums'>
+            {summary}
+            {group.usesModifiedTime ? ' · 修改时间' : ''}
+          </span>
         </button>
       </CollapsibleTrigger>
-      <CollapsibleContent className='space-y-2 pt-2'>
+      <CollapsibleContent className='divide-y divide-border/50'>
         {group.reports.map((report) => (
           <ReportListItem
             key={report.id}
@@ -621,19 +618,27 @@ export function ReportListItem({
       type='button'
       onClick={onSelect}
       className={cn(
-        'w-full rounded-lg border p-3 text-start transition-colors hover:bg-muted',
-        selected && 'border-primary bg-muted',
+        'relative flex w-full items-start gap-2.5 px-3.5 py-2.5 text-start transition-colors duration-100 hover:bg-accent/50',
+        selected && 'bg-accent/80 before:absolute before:inset-y-1.5 before:start-0 before:w-0.5 before:rounded-full before:bg-primary',
       )}
     >
-      <div className='flex items-start gap-2'>
-        <FileText className='mt-0.5 size-4 shrink-0 text-muted-foreground' />
-        <div className='min-w-0 flex-1'>
-          <div className='flex items-start justify-between gap-2'>
-            <OverflowTooltip
-              text={report.title}
-              className='flex-1 text-sm font-medium'
-              focusable={false}
-            />
+      <FileText
+        className={cn(
+          'mt-0.5 size-3.5 shrink-0',
+          selected ? 'text-primary' : 'text-muted-foreground/80',
+        )}
+      />
+      <div className='min-w-0 flex-1'>
+        <div className='flex items-start justify-between gap-2'>
+          <OverflowTooltip
+            text={report.title}
+            className={cn(
+              'flex-1 text-[13px] leading-snug',
+              selected ? 'font-medium text-foreground' : 'font-normal text-foreground/90',
+            )}
+            focusable={false}
+          />
+          <div className='flex shrink-0 items-center gap-1'>
             <ReportKind kind={report.kind} />
             {report.summaryMetadataStatus === 'invalid' ? (
               <Badge variant='destructive' title={report.summaryMetadataMessage}>
@@ -641,23 +646,23 @@ export function ReportListItem({
               </Badge>
             ) : null}
           </div>
-          <OverflowTooltip
-            text={detail}
-            className='mt-1 text-xs text-muted-foreground'
-            content={
-              <div className='space-y-1'>
-                <p>{detail}</p>
-                <p className='font-mono text-primary-foreground/80'>{report.relativePath}</p>
-              </div>
-            }
-            focusable={false}
-          />
-          <div className='mt-2 flex items-center justify-between gap-2 text-xs text-muted-foreground'>
-            <OverflowTooltip text={footerLabel} className='flex-1' focusable={false} />
-            <span className='shrink-0'>
-              {formatModifiedAt(report.modifiedAt)} · {formatBytes(report.size)}
-            </span>
-          </div>
+        </div>
+        <OverflowTooltip
+          text={detail}
+          className='mt-0.5 text-[11.5px] text-muted-foreground'
+          content={
+            <div className='space-y-1'>
+              <p>{detail}</p>
+              <p className='font-mono text-muted-foreground'>{report.relativePath}</p>
+            </div>
+          }
+          focusable={false}
+        />
+        <div className='mt-1.5 flex items-center justify-between gap-2 text-[11px] text-muted-foreground/80'>
+          <OverflowTooltip text={footerLabel} className='flex-1' focusable={false} />
+          <span className='shrink-0 font-mono tabular-nums'>
+            {formatModifiedAt(report.modifiedAt)} · {formatBytes(report.size)}
+          </span>
         </div>
       </div>
     </button>
@@ -695,17 +700,18 @@ function ReportPreview({
     : ''
 
   return (
-    <Card className='min-h-0 overflow-hidden py-0'>
+    <div className='min-h-0 overflow-hidden bg-background'>
       {report ? (
-        <div className='flex h-full min-h-0 flex-col'>
-          <div className='flex items-center justify-between gap-3 border-b p-4'>
+        <Tabs defaultValue='preview' className='flex h-full min-h-0 flex-col gap-0'>
+          <div className='flex flex-wrap items-center justify-between gap-3 border-b border-border/80 px-5 py-2.5'>
             <div className='min-w-0 flex-1'>
-              <div className='flex items-center gap-2'>
-                <OverflowTooltip text={report.title} className='flex-1 font-medium' />
-              </div>
+              <OverflowTooltip
+                text={report.title}
+                className='text-sm font-semibold tracking-[-0.015em] text-foreground'
+              />
               <OverflowTooltip
                 text={metadata}
-                className='mt-1 text-xs text-muted-foreground'
+                className='mt-0.5 font-mono text-[11px] text-muted-foreground'
                 content={
                   <div className='space-y-1'>
                     <p>
@@ -713,12 +719,20 @@ function ReportPreview({
                         ? formatPeriod(report.period)
                         : `按修改时间 · ${formatModifiedAt(report.modifiedAt)}`}
                     </p>
-                    <p className='font-mono text-primary-foreground/80'>{report.relativePath}</p>
+                    <p className='font-mono text-muted-foreground'>{report.relativePath}</p>
                   </div>
                 }
               />
             </div>
-            <div className='flex gap-2'>
+            <div className='flex flex-wrap items-center gap-1.5'>
+              <TabsList className='h-7'>
+                <TabsTrigger value='preview' className='px-2 text-xs'>
+                  预览
+                </TabsTrigger>
+                <TabsTrigger value='source' className='px-2 text-xs'>
+                  Markdown 原文
+                </TabsTrigger>
+              </TabsList>
               {!trashView &&
                 report.kind === 'summary' &&
                 report.summaryMetadataStatus === 'valid' && (
@@ -743,7 +757,7 @@ function ReportPreview({
               {!trashView && report.kind === 'summary' ? (
                 <Button
                   size='sm'
-                  variant='outline'
+                  variant='ghost'
                   onClick={() => onTrash(report.id)}
                   disabled={actionPending}
                 >
@@ -775,7 +789,7 @@ function ReportPreview({
               ) : null}
               <Button
                 size='sm'
-                variant='outline'
+                variant='ghost'
                 onClick={() => void showReportInFolder(report.id)}
               >
                 <FolderOpen />
@@ -783,27 +797,22 @@ function ReportPreview({
               </Button>
             </div>
           </div>
-          <Tabs defaultValue='preview' className='min-h-0 flex-1 gap-0'>
-            <div className='border-b px-4 py-2'>
-              <TabsList>
-                <TabsTrigger value='preview'>预览</TabsTrigger>
-                <TabsTrigger value='source'>Markdown 原文</TabsTrigger>
-              </TabsList>
-            </div>
-            <TabsContent value='preview' className='min-h-0 flex-1 overflow-hidden'>
-              <ScrollArea className='h-full'>
-                <MarkdownViewer content={report.content} className='p-5' />
-              </ScrollArea>
-            </TabsContent>
-            <TabsContent value='source' className='min-h-0 flex-1 overflow-hidden'>
-              <ScrollArea className='h-full'>
-                <pre className='min-w-full whitespace-pre-wrap break-words p-5 font-mono text-sm leading-6'>
-                  {report.content}
-                </pre>
-              </ScrollArea>
-            </TabsContent>
-          </Tabs>
-        </div>
+
+          <TabsContent value='preview' className='min-h-0 flex-1 overflow-hidden'>
+            <ScrollArea className='h-full'>
+              <div className='mx-auto max-w-3xl px-6 py-5'>
+                <MarkdownViewer content={report.content} />
+              </div>
+            </ScrollArea>
+          </TabsContent>
+          <TabsContent value='source' className='min-h-0 flex-1 overflow-hidden'>
+            <ScrollArea className='h-full'>
+              <pre className='min-w-full whitespace-pre-wrap break-words px-6 py-5 font-mono text-xs leading-6 text-foreground/90'>
+                {report.content}
+              </pre>
+            </ScrollArea>
+          </TabsContent>
+        </Tabs>
       ) : error ? (
         <div className='flex h-full items-center justify-center p-8'>
           <Alert variant='destructive' className='max-w-xl'>
@@ -815,11 +824,11 @@ function ReportPreview({
           </Alert>
         </div>
       ) : (
-        <div className='flex h-full min-h-72 items-center justify-center p-8 text-center text-muted-foreground'>
+        <div className='flex h-full min-h-72 items-center justify-center p-8 text-center text-xs text-muted-foreground'>
           {loading ? '正在读取报告…' : '当前筛选条件下没有可预览的报告。'}
         </div>
       )}
-    </Card>
+    </div>
   )
 }
 
@@ -833,7 +842,7 @@ function ReportListError({
   onRetry(): void
 }) {
   return (
-    <Card className='flex min-h-0 flex-1 items-center justify-center p-8'>
+    <div className='flex min-h-0 flex-1 items-center justify-center p-8'>
       <div className='w-full max-w-2xl space-y-4'>
         <Alert variant='destructive'>
           <AlertTriangle />
@@ -854,7 +863,7 @@ function ReportListError({
           </Button>
         </div>
       </div>
-    </Card>
+    </div>
   )
 }
 
@@ -867,7 +876,11 @@ const ROLE_LABELS: Record<ReportFile['role'], string> = {
 
 function ReportKind({ kind }: { kind: ReportFile['kind'] }) {
   const labels = { raw: '采集数据', summary: '报告正文' }
-  return <Badge variant='outline'>{labels[kind]}</Badge>
+  return (
+    <Badge variant={kind === 'summary' ? 'default' : 'outline'}>
+      {labels[kind]}
+    </Badge>
+  )
 }
 
 function formatModifiedAt(value: string): string {
