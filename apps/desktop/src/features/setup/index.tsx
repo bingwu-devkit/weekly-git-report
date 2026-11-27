@@ -20,8 +20,9 @@ import {
 import { ConfigSchema } from '@weekly-git-report/shared'
 import type { Config, Identity } from '@weekly-git-report/shared'
 import { toast } from 'sonner'
-import { Logo } from '@/assets/logo'
+import { WindowTitlebar } from '@/components/layout/window-titlebar'
 import { ThemeSwitch } from '@/components/theme-switch'
+import { cn } from '@/lib/utils'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -209,7 +210,7 @@ export function Setup() {
 
   return (
     <SetupShell subtitle='首次设置'>
-      <div className='max-w-2xl space-y-2'>
+      <div className='max-w-2xl space-y-1.5'>
         <div className='flex flex-wrap items-center gap-2'>
           <Badge variant='secondary'>本地设置</Badge>
           {configState.data?.config && !setupComplete ? (
@@ -218,8 +219,8 @@ export function Setup() {
             </Button>
           ) : null}
         </div>
-        <h1 className='text-3xl font-bold tracking-tight'>生成并保存你的第一份报告</h1>
-        <p className='text-muted-foreground'>
+        <h1 className='text-xl font-semibold tracking-[-0.02em]'>生成并保存你的第一份报告</h1>
+        <p className='text-xs leading-relaxed text-muted-foreground'>
           按照以下步骤完成必要设置。中途退出不会丢失进度，下次打开可以继续。
         </p>
       </div>
@@ -519,19 +520,26 @@ export function Setup() {
 
 function SetupShell({ subtitle, children }: { subtitle: string; children: ReactNode }) {
   return (
-    <div className='min-h-svh bg-muted/30'>
-      <header className='border-b bg-background/95'>
-        <div className='mx-auto flex h-16 max-w-5xl items-center gap-3 px-4 sm:px-6'>
-          <Logo className='size-8' />
-          <div className='min-w-0 flex-1'>
-            <p className='truncate font-semibold'>Weekly Git Report</p>
-            <p className='truncate text-xs text-muted-foreground'>{subtitle}</p>
-          </div>
-          <SetupUpdateEntry />
-          <ThemeSwitch />
+    <div
+      data-desktop-shell='true'
+      className='flex h-svh flex-col overflow-hidden bg-sidebar'
+    >
+      <WindowTitlebar
+        subtitle={subtitle}
+        right={
+          <>
+            <SetupUpdateEntry />
+            <ThemeSwitch />
+          </>
+        }
+      />
+      <div className='mx-1.5 mb-1.5 flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border border-border bg-background'>
+        <div className='min-h-0 flex-1 overflow-y-auto'>
+          <main className='mx-auto max-w-4xl space-y-5 px-5 py-6 sm:px-6'>
+            {children}
+          </main>
         </div>
-      </header>
-      <main className='mx-auto max-w-5xl space-y-6 px-4 py-8 sm:px-6'>{children}</main>
+      </div>
     </div>
   )
 }
@@ -750,11 +758,11 @@ function SetupStep({
   children: ReactNode
 }) {
   return (
-    <Card className={active ? 'border-primary/50 shadow-sm' : ''}>
-      <CardHeader>
+    <Card className={cn('gap-0 py-0', active && 'border-primary/50')}>
+      <CardHeader className='px-4 py-3'>
         <button
           type='button'
-          className='flex w-full items-start gap-3 text-start disabled:cursor-not-allowed disabled:opacity-60'
+          className='flex w-full items-center gap-3 text-start disabled:cursor-not-allowed disabled:opacity-50'
           disabled={!available}
           onClick={onOpen}
           aria-expanded={active}
@@ -762,28 +770,32 @@ function SetupStep({
           <span
             className={
               completed
-                ? 'flex size-8 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground'
+                ? 'flex size-6 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground'
                 : active
-                  ? 'flex size-8 shrink-0 items-center justify-center rounded-full border-2 border-primary text-sm font-semibold text-primary'
-                  : 'flex size-8 shrink-0 items-center justify-center rounded-full border text-sm text-muted-foreground'
+                  ? 'flex size-6 shrink-0 items-center justify-center rounded-full border border-primary bg-primary/10 font-mono text-xs font-semibold text-primary tabular-nums'
+                  : 'flex size-6 shrink-0 items-center justify-center rounded-full border border-border font-mono text-xs text-muted-foreground tabular-nums'
             }
           >
-            {completed ? <Check className='size-4' /> : index + 1}
+            {completed ? <Check className='size-3.5' /> : index + 1}
           </span>
           <span className='min-w-0 flex-1'>
-            <CardTitle>{title}</CardTitle>
-            <CardDescription className='mt-1.5'>{description}</CardDescription>
+            <CardTitle className='text-[13.5px]'>{title}</CardTitle>
+            <CardDescription className='mt-0.5'>{description}</CardDescription>
           </span>
           {completed ? (
             <Badge variant='secondary'>已完成</Badge>
           ) : active ? (
             <Badge>当前步骤</Badge>
           ) : (
-            <Circle className='mt-1 size-4 text-muted-foreground' />
+            <Circle className='size-3.5 text-muted-foreground/50' />
           )}
         </button>
       </CardHeader>
-      {active ? <CardContent>{children}</CardContent> : null}
+      {active ? (
+        <CardContent className='border-t border-border/70 px-4 py-4'>
+          {children}
+        </CardContent>
+      ) : null}
     </Card>
   )
 }

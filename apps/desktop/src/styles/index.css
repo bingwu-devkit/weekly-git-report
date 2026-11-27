@@ -10,13 +10,21 @@
     scrollbar-width: thin;
     scrollbar-color: var(--border) transparent;
   }
+
   html {
-    @apply overflow-x-hidden;
-  }
-  body {
-    @apply min-h-svh w-full bg-background text-foreground has-[div[data-variant='inset']]:bg-sidebar;
+    @apply overflow-x-hidden antialiased;
+    font-family: var(--font-sans);
+    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+    text-rendering: optimizeLegibility;
   }
 
+  body {
+    @apply min-h-svh w-full bg-sidebar text-[13.5px] leading-[1.5] text-foreground;
+  }
+
+  html:has([data-desktop-shell='true']),
+  body:has([data-desktop-shell='true']),
+  body:has([data-desktop-shell='true']) #root,
   html:has([data-layout='fixed']),
   body:has([data-layout='fixed']),
   body:has([data-layout='fixed']) #root {
@@ -35,44 +43,55 @@
     cursor: pointer;
   }
 
-  /* Prevent focus zoom on mobile devices */
-  @media screen and (max-width: 767px) {
-    input,
-    select,
-    textarea {
-      font-size: 16px !important;
-    }
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
   }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 9999px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--muted-foreground);
+  }
+}
+
+@utility app-drag {
+  -webkit-app-region: drag;
+  user-select: none;
+}
+
+@utility app-no-drag {
+  -webkit-app-region: no-drag;
 }
 
 @utility container {
   margin-inline: auto;
-  padding-inline: 2rem;
+  padding-inline: 1.5rem;
 }
 
 @utility no-scrollbar {
-  /* Hide scrollbar for Chrome, Safari and Opera */
   &::-webkit-scrollbar {
     display: none;
   }
-  /* Hide scrollbar for IE, Edge and Firefox */
-  -ms-overflow-style: none; /* IE and Edge */
-  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
-@utility faded-bottom {
-  @apply after:pointer-events-none after:absolute after:inset-s-0 after:bottom-0 after:hidden after:h-32 after:w-full after:rounded-b-2xl after:bg-[linear-gradient(180deg,transparent_10%,var(--background)_70%)] md:after:block;
-}
-
-/* styles.css */
 .CollapsibleContent {
   overflow: hidden;
 }
 .CollapsibleContent[data-state='open'] {
-  animation: slideDown 300ms ease-out;
+  animation: slideDown 150ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 .CollapsibleContent[data-state='closed'] {
-  animation: slideUp 300ms ease-out;
+  animation: slideUp 150ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 @keyframes slideDown {

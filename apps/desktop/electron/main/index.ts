@@ -38,7 +38,19 @@ function createWindow(): void {
     icon: join(__dirname, "../../resources/icon.png"),
     show: false,
     autoHideMenuBar: true,
-    backgroundColor: "#09090b",
+    backgroundColor: "#0B0C0E",
+    titleBarStyle: "hidden",
+    ...(process.platform === "darwin"
+      ? { trafficLightPosition: { x: 12, y: 10 } }
+      : process.platform === "win32"
+        ? {
+            titleBarOverlay: {
+              color: "#00000000",
+              symbolColor: "#9FA4AE",
+              height: 36,
+            },
+          }
+        : {}),
     webPreferences: {
       preload: join(__dirname, "../preload/index.cjs"),
       contextIsolation: true,

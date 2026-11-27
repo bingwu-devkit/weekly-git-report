@@ -300,6 +300,7 @@ export interface DesktopAPI {
     diagnostics(): Promise<DiagnosticCheck[]>;
     openOutputRoot(): Promise<string>;
     selectDirectory(initialPath?: string): Promise<string | null>;
+    setWindowTheme?(theme: "dark" | "light"): Promise<void>;
   };
 }
 
@@ -368,4 +369,5 @@ export const IPC_CHANNELS = {
   systemDiagnostics: "system:diagnostics",
   systemOpenOutputRoot: "system:open-output-root",
   systemSelectDirectory: "system:select-directory",
+  systemSetWindowTheme: "system:set-window-theme",
 } as const;

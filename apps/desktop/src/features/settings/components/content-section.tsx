@@ -8,16 +8,23 @@ type ContentSectionProps = {
   contentClassName?: string
 }
 
-export function ContentSection({ title, desc, children, contentClassName }: ContentSectionProps) {
+export function ContentSection({
+  title,
+  desc,
+  children,
+  contentClassName,
+}: ContentSectionProps) {
   return (
-    <div className='flex flex-1 flex-col'>
-      <div className='flex-none'>
-        <h3 className='text-lg font-medium'>{title}</h3>
-        <p className='text-sm text-muted-foreground'>{desc}</p>
-      </div>
-      <Separator className='my-4 flex-none' />
-      <div className='h-full w-full overflow-y-auto scroll-smooth pe-4 pb-12'>
-        <div className={cn('-mx-1 px-1.5 lg:max-w-xl', contentClassName)}>{children}</div>
+    <div className='flex w-full flex-1 flex-col'>
+      <div className={cn('mx-auto w-full max-w-2xl pb-12', contentClassName)}>
+        <div className='space-y-0.5'>
+          <h1 className='text-lg font-semibold tracking-[-0.02em] text-foreground'>
+            {title}
+          </h1>
+          <p className='text-xs text-muted-foreground'>{desc}</p>
+        </div>
+        <Separator className='my-4' />
+        <div>{children}</div>
       </div>
     </div>
   )

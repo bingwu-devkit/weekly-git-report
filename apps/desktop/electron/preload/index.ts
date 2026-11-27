@@ -138,6 +138,8 @@ const electronAPI: DesktopAPI = Object.freeze({
     openOutputRoot: () => ipcRenderer.invoke(IPC_CHANNELS.systemOpenOutputRoot),
     selectDirectory: (initialPath?: string) =>
       ipcRenderer.invoke(IPC_CHANNELS.systemSelectDirectory, initialPath),
+    setWindowTheme: (theme: "dark" | "light") =>
+      ipcRenderer.invoke(IPC_CHANNELS.systemSetWindowTheme, theme),
   }),
 });
 

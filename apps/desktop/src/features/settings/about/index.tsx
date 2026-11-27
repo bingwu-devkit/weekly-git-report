@@ -14,7 +14,6 @@ import { MarkdownViewer } from '@/components/markdown-viewer'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import {
   desktopUpdateAvailableToastId,
   desktopUpdateQueryKey,
@@ -32,7 +31,6 @@ export function SettingsAbout() {
     <ContentSection
       title='关于与更新'
       desc='查看桌面应用版本、更新状态和版本说明。'
-      contentClassName='lg:max-w-2xl'
     >
       <DesktopUpdatePanel />
     </ContentSection>
@@ -100,8 +98,9 @@ export function DesktopUpdatePanel() {
 
   if (update.isLoading || !update.data) {
     return (
-      <div className='flex items-center gap-2 rounded-lg border p-6 text-sm text-muted-foreground'>
-        <Loader2 className='animate-spin' />正在读取更新状态…
+      <div className='flex items-center gap-2 rounded-lg border border-border p-5 text-xs text-muted-foreground'>
+        <Loader2 className='size-3.5 animate-spin' />
+        正在读取更新状态…
       </div>
     )
   }
@@ -117,22 +116,25 @@ export function DesktopUpdatePanel() {
   const status = update.data
   return (
     <div className='space-y-5'>
-      <Card>
-        <CardHeader>
-          <div className='flex items-start justify-between gap-3'>
-            <div>
-              <CardTitle>Weekly Git Report Desktop</CardTitle>
-              <CardDescription>正式安装版通过 GitHub Releases 获取稳定更新。</CardDescription>
-            </div>
-            <StatusBadge status={status} />
+      <section className='overflow-hidden rounded-lg border border-border bg-card'>
+        <div className='flex items-start justify-between gap-3 border-b border-border/80 px-4 py-3'>
+          <div>
+            <h2 className='text-[13.5px] font-medium text-foreground'>
+              Weekly Git Report Desktop
+            </h2>
+            <p className='mt-0.5 text-xs text-muted-foreground'>
+              正式安装版通过 GitHub Releases 获取稳定更新。
+            </p>
           </div>
-        </CardHeader>
-        <CardContent className='space-y-5'>
-          <dl className='grid gap-3 text-sm sm:grid-cols-2'>
-            <VersionItem label='当前版本' value={status.currentVersion} />
-            <VersionItem label='最新版本' value={status.latestVersion ?? '尚未检查'} />
-          </dl>
+          <StatusBadge status={status} />
+        </div>
 
+        <dl className='grid divide-y divide-border/70 border-b border-border/80 sm:grid-cols-2 sm:divide-x sm:divide-y-0'>
+          <VersionItem label='当前版本' value={status.currentVersion} />
+          <VersionItem label='最新版本' value={status.latestVersion ?? '尚未检查'} />
+        </dl>
+
+        <div className='space-y-4 p-4'>
           {status.phase === 'disabled' && (
             <Alert>
               <AlertTitle>当前环境不启用自动更新</AlertTitle>
@@ -160,13 +162,15 @@ export function DesktopUpdatePanel() {
               variant='ghost'
               onClick={() => void window.electronAPI.updates.openLogs()}
             >
-              <FileClock />打开更新日志目录
+              <FileClock />
+              打开更新日志目录
             </Button>
             <Button
               variant='outline'
               onClick={() => void window.electronAPI.updates.openRelease()}
             >
-              <ExternalLink />查看发布页面
+              <ExternalLink />
+              查看发布页面
             </Button>
             <UpdateAction
               status={status}
@@ -179,40 +183,82 @@ export function DesktopUpdatePanel() {
               onInstall={() => install.mutate()}
             />
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </section>
 
       {status.releaseNotes && (
-        <Card>
-          <CardHeader>
-            <CardTitle>{status.releaseName || `版本 ${status.latestVersion} 更新说明`}</CardTitle>
+        <section className='overflow-hidden rounded-lg border border-border bg-card'>
+          <div className='border-b border-border/80 px-4 py-3'>
+            <h2 className='text-[13.5px] font-medium text-foreground'>
+              {status.releaseName || `版本 ${status.latestVersion} 更新说明`}
+            </h2>
             {status.releaseDate && (
-              <CardDescription>发布于 {formatDate(status.releaseDate)}</CardDescription>
+              <p className='mt-0.5 text-xs text-muted-foreground'>
+                发布于 {formatDate(status.releaseDate)}
+              </p>
             )}
-          </CardHeader>
-          <CardContent>
+          </div>
+          <div className='p-4'>
             <MarkdownViewer content={status.releaseNotes} />
-          </CardContent>
-        </Card>
+          </div>
+        </section>
       )}
     </div>
   )
 }
 
-function UpdateAction({ status, busy, checking, downloading, installing, onCheck, onDownload, onInstall }: { status: DesktopUpdateStatus; busy: boolean; checking: boolean; downloading: boolean; installing: boolean; onCheck(): void; onDownload(): void; onInstall(): void }) {
+function UpdateAction({
+  status,
+  busy,
+  checking,
+  downloading,
+  installing,
+  onCheck,
+  onDownload,
+  onInstall,
+}: {
+  status: DesktopUpdateStatus
+  busy: boolean
+  checking: boolean
+  downloading: boolean
+  installing: boolean
+  onCheck(): void
+  onDownload(): void
+  onInstall(): void
+}) {
   if (
     status.phase === 'available' ||
     (status.phase === 'error' && status.failedAction === 'download')
   ) {
-    return <Button disabled={busy} onClick={onDownload}>{downloading ? <Loader2 className='animate-spin' /> : <Download />}下载更新</Button>
+    return (
+      <Button disabled={busy} onClick={onDownload}>
+        {downloading ? <Loader2 className='animate-spin' /> : <Download />}
+        下载更新
+      </Button>
+    )
   }
   if (status.phase === 'downloading') {
-    return <Button disabled><Loader2 className='animate-spin' />正在下载</Button>
+    return (
+      <Button disabled>
+        <Loader2 className='animate-spin' />
+        正在下载
+      </Button>
+    )
   }
   if (status.phase === 'downloaded') {
-    return <Button disabled={busy || Boolean(status.installBlockedReason)} onClick={onInstall}>{installing ? <Loader2 className='animate-spin' /> : <RotateCcw />}重启并安装</Button>
+    return (
+      <Button disabled={busy || Boolean(status.installBlockedReason)} onClick={onInstall}>
+        {installing ? <Loader2 className='animate-spin' /> : <RotateCcw />}
+        重启并安装
+      </Button>
+    )
   }
-  return <Button disabled={busy || status.phase === 'disabled'} onClick={onCheck}>{checking || status.phase === 'checking' ? <Loader2 className='animate-spin' /> : <RefreshCw />}{status.phase === 'error' ? '重试检查' : '检查更新'}</Button>
+  return (
+    <Button disabled={busy || status.phase === 'disabled'} onClick={onCheck}>
+      {checking || status.phase === 'checking' ? <Loader2 className='animate-spin' /> : <RefreshCw />}
+      {status.phase === 'error' ? '重试检查' : '检查更新'}
+    </Button>
+  )
 }
 
 function StatusBadge({ status }: { status: DesktopUpdateStatus }) {
@@ -227,22 +273,54 @@ function StatusBadge({ status }: { status: DesktopUpdateStatus }) {
     error: '操作失败',
   }
   if (status.phase === 'error') return <Badge variant='destructive'>{labels[status.phase]}</Badge>
-  if (status.phase === 'up-to-date') return <Badge variant='secondary'><CheckCircle2 />{labels[status.phase]}</Badge>
+  if (status.phase === 'up-to-date') {
+    return (
+      <Badge variant='secondary'>
+        <CheckCircle2 />
+        {labels[status.phase]}
+      </Badge>
+    )
+  }
+  if (status.phase === 'available' || status.phase === 'downloaded') {
+    return <Badge variant='default'>{labels[status.phase]}</Badge>
+  }
   return <Badge variant='outline'>{labels[status.phase]}</Badge>
 }
 
 function VersionItem({ label, value }: { label: string; value: string }) {
-  return <div className='rounded-lg border p-4'><dt className='text-muted-foreground'>{label}</dt><dd className='mt-1 font-mono text-base font-medium'>{value}</dd></div>
+  return (
+    <div className='px-4 py-3'>
+      <dt className='text-[11.5px] text-muted-foreground'>{label}</dt>
+      <dd className='mt-0.5 font-mono text-sm font-medium text-foreground tabular-nums'>
+        {value}
+      </dd>
+    </div>
+  )
 }
 
 function DownloadProgress({ value }: { value: number }) {
   const percentage = Math.round(value)
-  return <div className='space-y-2' aria-label={`更新下载进度 ${percentage}%`}><div className='flex justify-between text-sm'><span>下载进度</span><span>{percentage}%</span></div><div className='h-2 overflow-hidden rounded-full bg-secondary'><div className='h-full rounded-full bg-primary transition-[width]' style={{ width: `${percentage}%` }} /></div></div>
+  return (
+    <div className='space-y-1.5' aria-label={`更新下载进度 ${percentage}%`}>
+      <div className='flex justify-between text-xs'>
+        <span className='text-muted-foreground'>下载进度</span>
+        <span className='font-mono tabular-nums'>{percentage}%</span>
+      </div>
+      <div className='h-1.5 overflow-hidden rounded-full bg-secondary'>
+        <div
+          className='h-full rounded-full bg-primary transition-[width] duration-150'
+          style={{ width: `${percentage}%` }}
+        />
+      </div>
+    </div>
+  )
 }
 
 function formatDate(value: string): string {
   const date = new Date(value)
-  return Number.isNaN(date.getTime()) ? value : new Intl.DateTimeFormat('zh-CN', { dateStyle: 'long' }).format(date)
+  return Number.isNaN(date.getTime())
+    ? value
+    : new Intl.DateTimeFormat('zh-CN', { dateStyle: 'long' }).format(date)
 }
 
 function showUpdateErrorToast(id: string, title: string, error: unknown) {
