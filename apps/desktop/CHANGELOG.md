@@ -1,5 +1,11 @@
 # @weekly-git-report/desktop
 
+## 1.2.1
+
+### Patch Changes
+
+- 5ec50ca: 优化桌面端应用图标、任务栏/安装包图标及页面图标为抗锯齿圆角样式，并提升高分屏清晰度。
+
 ## 1.2.0
 
 ### Minor Changes
